@@ -4,6 +4,7 @@ import firebase from 'firebase/app';
 import { useProfile } from '../../../context/profile.context';
 import { useParams } from 'react-router-dom/cjs/react-router-dom.min';
 import { database } from '../../../misc/firebase';
+import AttachmentBtnModal from './AttachmentBtnModal';
 function assembleMessage(profile, chatId) {
   return {
     roomId: chatId,
@@ -14,6 +15,7 @@ function assembleMessage(profile, chatId) {
       ...(profile.avatar ? { avatar: profile.avatar } : {}),
     },
     createdAt: firebase.database.ServerValue.TIMESTAMP,
+    likeCount: 0,
   };
 }
 
@@ -66,9 +68,44 @@ const Bottom = () => {
     }
   };
 
+  const afterUpload = useCallback(
+    async files => {
+      setIsLoading(true);
+
+      const updates = {};
+
+      files.forEach(file => {
+        const msgData = assembleMessage(profile, chatId);
+        msgData.file = file;
+
+        const messageId = database.ref('messages').push().key;
+
+        updates[`/messages/${messageId}`] = msgData;
+      });
+
+      const lastMsgId = Object.keys(updates).pop();
+
+      updates[`/rooms/${window.chatId}/lastMessage`] = {
+        ...updates[lastMsgId],
+        msgId: lastMsgId,
+      };
+
+      try {
+        await database.ref().update(updates);
+
+        setIsLoading(false);
+      } catch (err) {
+        setIsLoading(false);
+        Alert.error(err.message);
+      }
+    },
+    [profile, chatId]
+  );
+
   return (
     <div>
       <InputGroup>
+        <AttachmentBtnModal afterUpload={afterUpload} />
         <Input
           placeholder="Write a new message here..."
           value={input}
