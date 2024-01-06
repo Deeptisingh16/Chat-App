@@ -5,6 +5,7 @@ import { useProfile } from '../../../context/profile.context';
 import { useParams } from 'react-router-dom/cjs/react-router-dom.min';
 import { database } from '../../../misc/firebase';
 import AttachmentBtnModal from './AttachmentBtnModal';
+import AudioMsgBtn from './AudioMsgBtn';
 function assembleMessage(profile, chatId) {
   return {
     roomId: chatId,
@@ -85,7 +86,7 @@ const Bottom = () => {
 
       const lastMsgId = Object.keys(updates).pop();
 
-      updates[`/rooms/${window.chatId}/lastMessage`] = {
+      updates[`/rooms/${chatId}/lastMessage`] = {
         ...updates[lastMsgId],
         msgId: lastMsgId,
       };
@@ -106,6 +107,7 @@ const Bottom = () => {
     <div>
       <InputGroup>
         <AttachmentBtnModal afterUpload={afterUpload} />
+        <AudioMsgBtn afterUpload={afterUpload} />
         <Input
           placeholder="Write a new message here..."
           value={input}
